@@ -6,10 +6,10 @@ rm gdb_output2.log > /dev/null 2>&1
 rm gdbcommands > /dev/null 2>&1
 
 #create the assembly file (we actually don't need it)
-gcc -S shellcode-creator.c -o shellcode.s -O0 -fno-stack-protector -g
+gcc -S -no-pie shellcode-creator.c -o shellcode.s -O0 -fno-stack-protector -g 
 
 #create the 'shellcode' executable
-gcc  shellcode-creator.c -o shellcode -O0 -fno-stack-protector -g
+gcc  -no-pie shellcode-creator.c -o shellcode -O0 -fno-stack-protector -g -fPIC
 
 #run gdb to look at the addresses
 echo -e "disass main\nq" >> gdbcommands
