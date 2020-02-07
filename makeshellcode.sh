@@ -17,17 +17,17 @@ gdb ./shellcode -q -x gdbcommands > gdb_output.log
 #gdb ./shellcode -q -x gdbcommands 
 rm gdbcommands
 
-#get the adress of the first of our own instructions 
+#get the adress of the first and last of our own instructions and the number of bytes we want 
 LINENR=$(grep '<+4>' gdb_output.log | head -1 | sed -e 's/^[ \t]*//'| sed 's/ .*//')
 LASTLINENR=$(grep 'retq' gdb_output.log| head -1 | sed -e 's/^[ \t]*//'| sed 's/ .*//')
 LASTLINENR=$(printf "%d\n" $(($LASTLINENR - 0x06 )))
-LINES=$(printf "%d\n" $(($LASTLINENR - $LINENR )))
+BYTES=$(printf "%d\n" $(($LASTLINENR - $LINENR )))
 
 #printf "From 0x%X to 0x%X\n" $LINENR $LASTLINENR
-#echo $LINES
+#echo $BYTES
 
 #run gdb again and get the hex commands for the assembly instructions
-echo -e "x/"$LINES"xb "$LINENR" \nq\n" >> gdbcommands
+echo -e "x/"$BYTES"xb "$LINENR" \nq\n" >> gdbcommands
 gdb ./shellcode -q -x gdbcommands > gdb_output2.log
 #gdb ./shellcode -q -x gdbcommands 
 rm gdbcommands
