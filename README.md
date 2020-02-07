@@ -8,6 +8,9 @@ To compile the files with the flags, execute
 ```./compile-all.sh```
 This script also disables ASLR (stack randomization), which helps because the memory addresses will stay the same between two executions of the program.
 
+
+![makeshellcode script](https://github.com/LauraWartschinski/)
+
 There is also a script `makeshellcode.sh`, which will automatically generate the bytes of assembly code for the instructions specified in `shellcode-creator.c`. 
 
 ## Hackme 1 ##
