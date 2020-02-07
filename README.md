@@ -9,7 +9,7 @@ To compile the files with the flags, execute
 This script also disables ASLR (stack randomization), which helps because the memory addresses will stay the same between two executions of the program.
 
 
-![makeshellcode script](https://github.com/LauraWartschinski/)
+![makeshellcode script](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/makeshellcode.png)
 
 There is also a script `makeshellcode.sh`, which will automatically generate the bytes of assembly code for the instructions specified in `shellcode-creator.c`. 
 
