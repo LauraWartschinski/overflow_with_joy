@@ -2,8 +2,8 @@
 
 ## Intro ##
 
-This is a collection of programs written in c that are vulnerable for buffer overflows, and exploits for them. 
-
+This is a collection of programs written in c that are vulnerable for buffer overflows, and exploits for them. When programs are executed, they use a stack to store variables, parameters, information about the control flow and so on. For example, when a program enters a function, it has to save the address of the next instruction to execute when it is done with the function and wants to return. 
+Some vulnerabilities in code can make it possible to manipulate that stack, e.g. to overwrite the return address, which will cause the programm to jump to a different place in the memory and possibly execute instructions there. Many times, this happens because a buffer - a designated block of memory that stores some values of the same type - is not managed correctly, allowing for values to be written that exceed the capacity of the buffer and overwrite whatever comes next on the stack, possible until the return address (see image below). For a comprehensive introduction into the topic of buffer overflows and executing shell code on the stack, see [smashing the stack for fun and profit](http://www-inst.eecs.berkeley.edu/~cs161/fa08/papers/stack_smashing.pdf).
 
 ![Stack](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/stack.png)
 
