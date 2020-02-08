@@ -9,6 +9,6 @@ int main(int argc, char *argv[])
   {
     strcpy(buf,argv[1]);
     printf("Input was: %s\n",buf);
-    return 0;
   }
+  return 0;
 }

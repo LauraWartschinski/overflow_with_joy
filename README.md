@@ -20,7 +20,7 @@ This script also disables ASLR (stack randomization), which helps because the me
 
 ![makeshellcode script](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/makeshellcode.png)
 
-There is also a script `makeshellcode.sh`, which will automatically generate the bytes of assembly code for the instructions specified in `shellcode-creator.c`. 
+There is also a script `makeshellcode.sh`, which will automatically generate the bytes of assembly code for the instructions specified in `shellcode-creator.c`. It does so by starting the gdb and using its disass function to look at the bytes, to speed up the process of manual inspection. However, it will stop at the first `ret` instruction it encounters. As long as you don't use this, it's fine. Otherwise you might just need to figure out the instructions yourself. 
 
 
 ## Hackme 1 ##
@@ -60,6 +60,54 @@ In `exploit1.c`, shellcode is inserted that will cause the program to set the re
 
 ## Hackme 2 ##
 
+In the next example, we are looking at a C program that was not made to be exploited, but contains a buffer overflow vulnerability. The program takes an input as argument and checks if that input is correct, displaying either "password correct" or "wrong password". Of course, it might execute some other functionality, but this is just a minimal example. The goal here is to get the program to execute the code for the correct password, without actually entering the correct password. If it crashes later, that's okay, since the goal was reached anyway. 
+
+The programm can simply be executed with `./hackme2 mypassword`. This is the sourcecode: 
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int check_password(char *password){
+  int correct = 0;
+  char password_buffer[16];
+  
+  strcpy(password_buffer, password);
+  
+  if (strcmp(password_buffer, "actualpw") == 0) {
+    correct = 1;
+  }
+  
+  return correct;
+  
+  
+}
+
+
+int main (int argc, char *argv[]) {
+  if (argc < 2) {
+		puts("Please enter your password as a command line parameter.");
+  } else {
+    if (check_password(argv[1])) {
+      printf("Password correct.\n");
+    } else {
+      printf("Wrong password.\n");
+    }
+  }
+
+  return 0;
+  
+}
+``` 
+
+In the check_password function, a buffer of length 16 is created to store the password. There is also a variable `int correct` that will contain 0 if the password is wrong, or 1 if the password was evaluated to be correct. This local variable is placed on the stack (here at location `rbp-8`, directly above the base pointer of the stack). At the end of the function, it is loaded into the register eax, which can be seen in the disassembled code of check_password at location +68. The main function then checks if eax is zero or not (with the `test %eax, %eax'` at position +54) and jumps to the different outputs depending on the result. When "actualpw" is passed to the program as paramter, the variable `correct` contains 00000001 and is there not zero, causing the program to display "oassword correct".
+
+When the buffer in check_password gets filled with bytes, it grows in the direction of the variable `correct`. With a length of 16 bytes, it overwrites the variable to contain e.g. `0x4141414141414141`, which is also evaluated to be not zero, so the main function jumps into the "password correct" branch once more, even though the correct password was never entered. 
+
+![exploit2](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit2.png)
+
+The programm `exploit2` just produces the correct number of bytes as an output.
 
 ## Hackme 3 ##
 
