@@ -8,7 +8,11 @@ The memory of a program is seperated in different parts, including text for the 
 
 ![Stack](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/stack.png)
 
-Some vulnerabilities in code can make it possible to manipulate that stack, e.g. to overwrite the return address, which will cause the programm to jump to a different place in the memory and possibly execute instructions there. Many times, this happens because a buffer - a designated block of memory that stores some values of the same type - is not managed correctly, allowing for values to be written that exceed the capacity of the buffer and overwrite whatever comes next on the stack, possible until the return address (see image below). For a comprehensive introduction into the topic of buffer overflows and executing shell code on the stack, see [smashing the stack for fun and profit](http://www-inst.eecs.berkeley.edu/~cs161/fa08/papers/stack_smashing.pdf).
+Some vulnerabilities in code can make it possible to manipulate that stack, e.g. to overwrite the return address, which will cause the programm to jump to a different place in the memory and possibly execute instructions there. Many times, this happens because a buffer - a designated block of memory that stores some values of the same type - is not managed correctly, allowing for values to be written that exceed the capacity of the buffer and overwrite whatever comes next on the stack, possible until the return address (see image).
+
+The program also uses registers. The instruction pointer (eip in 32 bit, rip in 64 bit architectures) points to the next instruction the program will execute. The RSP (stack pointer) points to the top of the stack, where variables would be pushed onto and popped from the stack. The rbp (base pointer) points to the beginning of the stack at the very bottom for this specific function. Underneath the rbp lies the old rbp of the function that was called this function, and the return address to jump back.
+
+For a comprehensive introduction into the topic of buffer overflows and executing shell code on the stack, see [smashing the stack for fun and profit](http://www-inst.eecs.berkeley.edu/~cs161/fa08/papers/stack_smashing.pdf).
 
 
 ## Setup ##
