@@ -2,6 +2,17 @@
 
 This is a collection of programs written in c that are vulnerable for buffer overflows and exploits.
 
+- [overflow_with_joy](#overflow-with-joy)
+  * [Background](#background) and general explanations
+  * [Setup](#setup)
+    + [compiling everything](#compiling-everything)
+    + [creating shellcode bytes](#creating-shellcode-bytes)
+  * [Hackme 1](#hackme-1) executes whatever shellcode is inserted. Use it to start a new shell.
+  * [Hackme 2](#hackme-2) checks a password, but a buffer overflow makes it possible to overwrite the variable.
+  * [Hackme 3](#hackme-3) can be manipulated to execute code on the stack, e.g. to start a new shell.
+
+
+
 ## Background ##
 
 The memory of a program is seperated in different parts, including text for the code, data, bss, heap and stack. The data segment is for initialized static and global variables, the bss section is for uninitilized static and global variables. The heap is for dynamic memory accessed with new() or malloc(), and on the stack contains local variables and some other information. When a function is executed, it uses the stack to store its variables, parameters for other functions to call, some information about the control flow and so on. For example, when a program enters a function, it has to save the address of the next instruction to execute when it is done with the function and wants to return, and this return address is saved on the stack.
