@@ -114,11 +114,11 @@ When the buffer in check_password gets filled with bytes, it grows in the direct
 
 ![exploit2](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit2.png)
 
-The programm `exploit2` just produces the correct number of bytes as an output.
+The programm `exploit2` just produces the correct number of bytes as an output. Execute both with `./hackme2 $(./exploit2)`. 
 
 ## Hackme 3 ##
 
-`hackme3.c`
+For this example, the goal is to execute some arbitrary commands that were not programmed into `hackme3.c`. This is the original sourcecode:
 
 ``` 
 #include<stdio.h>
@@ -137,7 +137,9 @@ int main(int argc, char *argv[])
 }
 ``` 
 
-This program accepts a a parameter and then writes it out again. However, the length of the parameter is not checked, and if it exceeds the 256 byte buffer, an oveflow will occur. This makes it possible to overwrite the return address, causing the programm to jump up on the stack into the buffer, where shellcode has been placed, and this can then be executed to start another shell. The code in `exploit3.c` produces a string of bytes that serve exactly this function. Execute both with `./hackme3 $(./exploit3)`. 
+This program accepts a a parameter and then writes it out again. However, the length of the parameter is not checked, and if it exceeds the 256 byte buffer, an oveflow will occur. This makes it possible to overwrite the return address, causing the programm to jump elsewhere.
+
+More specifically, the programmed can be made to jump up on the stack into the area of the buffer. If the buffer was filled with data that can also be interpreted as instructions, they can then be executed. By putting in the instructions to execute a syscall that starts a shell, the programm will do exactly that. The code in `exploit3.c` produces a string of bytes that serves this function. Execute both with `./hackme3 $(./exploit3)`. 
 
 ```
 #include <stdio.h>
