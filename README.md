@@ -144,6 +144,8 @@ More specifically, the programmed can be made to jump up on the stack into the a
 
 When the return address is overwritten with an address within the stack, the execution of the programm follows that and jumps into a list of NOP instructions. This 'nop sled' accounts for small variations in the size and position of the stack. The next intructions are there to prepare the syscall execve. In register rax, the number of the syscall must be placed. Registers rdx and rsi have to be zero for this example. And rdi needs to point to a location where a string can be found that contains the name of the programm to execute, in this case `/bin/sh`. 
 
+Since it is not known exactly at which position this string will end up, the address can be put on the stack by using `call`, which was not intended for this hacky purpose, but serves it well. By placing the address of the next 'instruction' (in this case the address of the string) on top of the stack, we can later pop it back into th register where we need it. Of course, there are many other solutions.
+
 The shellcode presented here contains no null bytes because it has to be passed as a parameter to the programm. This is why some obvious instructions are replaced by less trivial ones which accomplish the same goal but don't contain null bytes.
 
 ![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3.png)
