@@ -12,14 +12,19 @@ Some vulnerabilities in code can make it possible to manipulate that stack, e.g.
 
 The program also uses registers. The instruction pointer (eip in 32 bit, rip in 64 bit architectures) points to the next instruction the program will execute. The RSP (stack pointer) points to the top of the stack, where variables would be pushed onto and popped from the stack. The rbp (base pointer) points to the beginning of the stack at the very bottom for this specific function. Underneath the rbp lies the old rbp of the function that was called this function, and the return address to jump back.
 
+
 For a comprehensive introduction into the topic of buffer overflows and executing shell code on the stack, see [smashing the stack for fun and profit](http://www-inst.eecs.berkeley.edu/~cs161/fa08/papers/stack_smashing.pdf).
 
 
 ## Setup ##
+
+### compiling everything ###
 To compile the files with the flags, execute
 ```./compile-all.sh```
 All code is compiled with some flags that make it easier to execute exploits:  `-fno-stack-protector` to not include stack canaries etc., `-z execstack` to make the stack executable, and `-O0` to remove optimizations. All exploits are made to execute on a 64 bit architecture and are tested in Ubuntu 18.04. The full command is for example 
 `gcc hackme1.c -o hackme1 -O0 -fno-stack-protector -z execstack -g`. This script also disables ASLR (stack randomization), which helps because the memory addresses will stay the same between two executions of the program. 
+
+### creating shellcode bytes ###
 
 ![makeshellcode script](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/makeshellcode.png)
 
@@ -28,9 +33,7 @@ There is also a script `makeshellcode.sh`, which will automatically generate the
 
 ## Hackme 1 ##
 
-To warm up, let's have a look at a program that was made to be exploited.
-
-`hackme1.c`
+To warm up, let's have a look at a program that was made to be exploited. This is the sourcecode for `hackme1.c`.
 
 ```
 int main(void)
@@ -60,7 +63,6 @@ In `exploit1.c`, shellcode is inserted that will cause the program to set the re
 "xor %rdx,%rdx;" //RDX must be set to zero    
 "syscall;" //start the 
 ```
-
 
 
 ## Hackme 2 ##
