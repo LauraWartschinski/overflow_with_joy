@@ -142,6 +142,9 @@ This program accepts a a parameter and then writes it out again. However, the le
 More specifically, the programmed can be made to jump up on the stack into the area of the buffer. If the buffer was filled with data that can also be interpreted as instructions, they can then be executed. By putting in the instructions to execute a syscall that starts a shell, the programm will do exactly that. The code in `exploit3.c` produces a string of bytes that serves this function. Execute both with `./hackme3 $(./exploit3)`. 
 
 
+When the return address is overwritten with an address within the stack, the execution of the programm follows that and jumps into a list of NOP instructions. This 'nop sled' accounts for small variations in the size and position of the stack. The next intructions are there to prepare the syscall execve. In register rax, the number of the syscall must be placed. Registers rdx and rsi have to be zero for this example. And rdi needs to point to a location where a string can be found that contains the name of the programm to execute, in this case `/bin/sh`. 
+
+The shellcode presented here contains no null bytes because it has to be passed as a parameter to the programm. This is why some obvious instructions are replaced by less trivial ones which accomplish the same goal but don't contain null bytes.
 
 ![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3.png)
 
