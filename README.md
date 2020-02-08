@@ -141,6 +141,10 @@ This program accepts a a parameter and then writes it out again. However, the le
 
 More specifically, the programmed can be made to jump up on the stack into the area of the buffer. If the buffer was filled with data that can also be interpreted as instructions, they can then be executed. By putting in the instructions to execute a syscall that starts a shell, the programm will do exactly that. The code in `exploit3.c` produces a string of bytes that serves this function. Execute both with `./hackme3 $(./exploit3)`. 
 
+
+
+![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3.png)
+
 ```
 #include <stdio.h>
 #include <string.h>
