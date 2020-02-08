@@ -150,6 +150,8 @@ The shellcode presented here contains no null bytes because it has to be passed 
 
 ![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3.png)
 
+This is the final shellcode, put into the programm `exploit.c`, which also creates the NOP slide before the actual payload starts. The \xaa bytes are for the purpose of aligning the stack correctly. Execute the exploits with `./hackme3 $(./exploit3)`. 
+
 ```
 #include <stdio.h>
 #include <string.h>
