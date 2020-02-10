@@ -2,17 +2,16 @@
 
 This is a collection of small demo programs written in c that are vulnerable for overflows and exploits.
 
-- [overflow_with_joy](#overflow-with-joy)
-  * [Background](#background) and general explanations
-  * [Setup](#setup)
-    + [compiling everything](#compiling-everything)
-    + [creating shellcode bytes](#creating-shellcode-bytes)
-  * [Hackme 1](#hackme-1) executes whatever shellcode is inserted. Use it to start a new shell.
-  * [Hackme 2](#hackme-2) checks a password, but a buffer overflow makes it possible to overwrite the variable.
-  * [Hackme 3](#hackme-3) has a function pointer that can be overwritten with a buffer overflow, causing the user to hit the jackpot.
-  * [Hackme 4](#hackme-4) can be tricked to execute shellcode from the environment variables to print "hacked!"
-  * [Hackme 5](#hackme-5) can be manipulated with a buffer overflow to execute code on the stack, in this case to start a new shell.
-  * [Hackme 6](#hackme-6) has a heap overflow vulnerability that can be exploited to display the contents of a secret file.
+- [Background](#background) and general explanations
+- [Setup](#setup)
+  * [compiling everything](#compiling-everything)
+  * [creating shellcode bytes](#creating-shellcode-bytes)
+- [Hackme 1](#hackme-1) executes whatever shellcode is inserted. Use it to start a new shell.
+- [Hackme 2](#hackme-2) checks a password, but a buffer overflow makes it possible to overwrite the variable.
+- [Hackme 3](#hackme-3) has a function pointer that can be overwritten with a buffer overflow, causing the user to hit the jackpot.
+- [Hackme 4](#hackme-4) can be tricked to execute shellcode from the environment variables to print "hacked!"
+- [Hackme 5](#hackme-5) can be manipulated with a buffer overflow to execute code on the stack, in this case to start a new shell.
+- [Hackme 6](#hackme-6) has a heap overflow vulnerability that can be exploited to display the contents of a secret file.
 
 
 
