@@ -9,8 +9,10 @@ This is a collection of small demo programs written in c that are vulnerable for
     + [creating shellcode bytes](#creating-shellcode-bytes)
   * [Hackme 1](#hackme-1) executes whatever shellcode is inserted. Use it to start a new shell.
   * [Hackme 2](#hackme-2) checks a password, but a buffer overflow makes it possible to overwrite the variable.
-  * [Hackme 3](#hackme-3) can be manipulated with a buffer overflow to execute code on the stack, e.g. to start a new shell.
-  * [Hackme 4](#hackme-4) shows a very simple heap overflow that can be exploited to display the contents of a secret file.
+  * [Hackme 3](#hackme-3) has a function pointer that can be overwritten with a buffer overflow, causing the user to hit the jackpot.
+  * [Hackme 4](#hackme-4) 
+  * [Hackme 5](#hackme-5) can be manipulated with a buffer overflow to execute code on the stack, e.g. to start a new shell.
+  * [Hackme 6](#hackme-6) shows a very simple heap overflow that can be exploited to display the contents of a secret file.
 
 
 
@@ -131,7 +133,66 @@ The programm `exploit2` just produces the correct number of bytes as an output. 
 
 ## Hackme 3 ##
 
-For this example, the goal is to execute some arbitrary commands that were not programmed into `hackme3.c`. This is the original sourcecode:
+This program is a little game that has an element of chance. If two random three-digit numbers are the same, the user will hit the jackpot and get a lot of money. However, the program uses a function pointer to jump to the part in the code where the game is executed. And the length of the username, which is stored in a buffer on the stack, is not checked at all. This can be used to the players advantage, making the game give out a jackpot and not even crashing in the process of doing so!
+
+![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3.png)
+
+
+This is the code for the program:
+
+```
+#include "string.h"
+#include "stdio.h"
+#include "time.h"
+#include "stdlib.h"
+
+void jackpot()
+{
+  printf("\n\n$$$ You hit the jackpot!!! $$$\nAll money will be transferred to your account immediately.\n\n");
+  return;
+}
+
+void play()
+{
+  srand(time(0)); 
+  int random = rand()%1000;
+  int number = rand()/10000000;
+  printf("\n\n======PLAYING THE GAME=====\n");
+  printf("The lucky number today is: %d\n", random);
+  printf("You rolled: %d.\n", number);
+  if (number == random){
+    jackpot();
+  } else {
+    printf("Sadly, this means you didn't win.\n");
+  }
+  return;
+}
+
+int main()
+{
+	void (*functionptr)();
+  functionptr = &play;
+  char name[8];   // first name of the player
+  printf("Welcome to this game of luck! What is your fist name:\n");
+  scanf("%s",name);
+  functionptr();
+  printf("Game finished.\n");
+	return 0;  
+}
+```
+
+The attacker only needs to chose the username in such a way that the buffer spills over to the functionptr, which is saved on the stack directly next to the name buffer. Instead of having the functionptr point to play(), it should instead be made to point to jackpot() directly. The address of jackpot() might start with null bytes, but the attacker only has to overwrite the bytes that need to be changed. The input string `\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xca\x47\x55\x55\x55\x55` sets 8 bytes that can be anything (stored as the user's name), followed by the address of jackpot(). 
+
+![exploit5 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit5explained.png)
+
+
+
+## Hackme 4 ##
+
+
+## Hackme 5 ##
+
+For this example, the goal is to execute some arbitrary commands that were not programmed into `hackme5.c`. This is the original sourcecode:
 
 ``` 
 #include<stdio.h>
@@ -154,7 +215,7 @@ This program accepts a a parameter and then writes it out again. However, the le
 
 More specifically, the programmed can be made to jump up on the stack into the area of the buffer. If the buffer was filled with data that can also be interpreted as instructions, they can then be executed. By putting in the instructions to execute a syscall that starts a shell, the programm will do exactly that. The code in `exploit3.c` produces a string of bytes that serves this function. Execute both with `./hackme3 $(./exploit3)`. 
 
-![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3.png)
+![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit5.png)
 
 When the return address is overwritten with an address within the stack, the execution of the programm follows that and jumps into a list of NOP instructions. This 'nop sled' accounts for small variations in the size and position of the stack. The next intructions are there to prepare the syscall execve. In register rax, the number of the syscall must be placed. Registers rdx and rsi have to be zero for this example. And rdi needs to point to a location where a string can be found that contains the name of the programm to execute, in this case `/bin/sh`. 
 
@@ -162,9 +223,9 @@ Since it is not known exactly at which position this string will end up, the add
 
 The shellcode presented here contains no null bytes because it has to be passed as a parameter to the programm. This is why some obvious instructions are replaced by less trivial ones which accomplish the same goal but don't contain null bytes.
 
-![exploit3 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3screen.png)
+![exploit5 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit5screen.png)
 
-This is the final shellcode, put into the programm `exploit.c`, which also creates the NOP slide before the actual payload starts. The \xaa bytes are for the purpose of aligning the stack correctly. Execute the exploits with `./hackme3 $(./exploit3)`. 
+This is the final shellcode, put into the programm `exploit.c`, which also creates the NOP slide before the actual payload starts. The \xaa bytes are for the purpose of aligning the stack correctly. Execute the exploits with `./hackme5 $(./exploit5)`. 
 
 ```
 #include <stdio.h>
@@ -185,12 +246,12 @@ int main()
 ```
 
 
-## Hackme 4 ##
+## Hackme 6 ##
 
 This time, the heap is used to create an overflow. There are two files on the file system, `public.txt` and `secret.txt`. The following program takes the username as an argument, greets the user, and without any intended connection to the username, displays the content of `public.txt`. However, since all the data is stored on the heap, an overflow for the username can overwrite the address of the file to read, causing the programm to display the contents of `secret.txt`.
 
 
-![exploit4 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit4.png)
+![exploit6 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit6.png)
 
 This is the sourcecode:
 
@@ -265,4 +326,4 @@ int main (int argc, char **argv)
 The space for information about the user is allocated first on the heap, and after that, space for the file is allocated. However, the information about the user is written on the heap later, which makes it possible to simply overwrite what was stored for the file on the heap with new information, e.g. the string "secret.txt" at exactly the place where `fileptr->filename` points to, causing the program to load secret.txt.
 
 
-![exploit4 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit4explained.png)
+![exploit6 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit6explained.png)
