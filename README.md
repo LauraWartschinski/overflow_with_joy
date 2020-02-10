@@ -206,9 +206,9 @@ e8 f9 ff ff ff          call   0x2
 0f 05                   syscall 
 ```
 
-The first three instructions save the address of the string on the stack. Then, this address is taken from the stack and put in register rsi. Next, the register RAX is cleared out to contain zero by using XOR with itself. RAX is then set to 1 by using incremet. Then, RDI and RDX are also set to 1 by copying the value from rax. With a shift left of 3 the value in RDX is changed to 8. Finally, the syscall is executed. This code will call printf and print "hacked!" to the screen.
+The first three instructions save the address of the string on the stack. Then, this address is taken from the stack and put in register rsi. Next, the register RAX is cleared out to contain zero by using XOR with itself. RAX is then set to 1 by using incremet. Then, RDI and RDX are also set to 1 by copying the value from rax. With a shift left of 3 the value in RDX is changed to 8. Finally, the syscall is executed. This code will call printf and print "hacked!" to the screen. It is saved in the file `shellcode.bin`.
 
-But how would a hacker put this shellcode into the target program? The whole programm is quite small, however, and there is only a buffer of 8 bytes.
+But how would a hacker put this shellcode into the target program? The whole programm is quite small, and there is only a buffer of 8 bytes.
 
 ```
 #include <string.h>
@@ -225,8 +225,11 @@ int main(int argc, char *argv[])
   return 0;
 }
 ```
-An attacker can overwrite the RIP stored on the stackframe of insecure() to jump somewhere else and to execute shellcode. However, there is not much space on the stack of the programm to put shellcode. 
+An attacker can overwrite the RIP stored on the stackframe of insecure() to jump somewhere else and to execute shellcode. However, there is not much space on the stack of the programm to put all the shellcode. There is another option: The attacker can put the shellcode in an environment variable, which will also be accessible on the stack during runtime. This is achieved with the command `export SHELLCODE=$(cat shellcode.bin)`. 
 
+Now all there is to do is to fill the buffer for the argument to `hackme4` with 8 bytes of meaningless content, followed by the 8 byte address of the environment variable on the stack. In `exploit4`, there is actually a somewhat flexible function that will calculate this position at runtime, taking the name of the environment variable as an argument. Look at [the sourcecode](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/code/exploit4.c) for more details. Now, if the hacker starts the program with `./hackme4 $(./exploit4 SHELLCODE)`, the shellcode calling printf is executed.
+
+![exploit4](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit4.png)
 
 
 ## Hackme 5 ##
