@@ -1,6 +1,6 @@
 # overflow_with_joy
 
-This is a collection of programs written in c that are vulnerable for overflows and exploits.
+This is a collection of small demo programs written in c that are vulnerable for overflows and exploits.
 
 - [overflow_with_joy](#overflow-with-joy)
   * [Background](#background) and general explanations
@@ -9,21 +9,22 @@ This is a collection of programs written in c that are vulnerable for overflows 
     + [creating shellcode bytes](#creating-shellcode-bytes)
   * [Hackme 1](#hackme-1) executes whatever shellcode is inserted. Use it to start a new shell.
   * [Hackme 2](#hackme-2) checks a password, but a buffer overflow makes it possible to overwrite the variable.
-  * [Hackme 3](#hackme-3) can be manipulated to execute code on the stack, e.g. to start a new shell.
+  * [Hackme 3](#hackme-3) can be manipulated with a buffer overflow to execute code on the stack, e.g. to start a new shell.
   * [Hackme 4](#hackme-4) shows a very simple heap overflow that can be exploited to display the contents of a secret file.
 
 
 
 ## Background ##
 
-The memory of a program is seperated in different parts, including text for the code, data, bss, heap and stack. The data segment is for initialized static and global variables, the bss section is for uninitilized static and global variables. The heap is for dynamic memory accessed with new() or malloc(), and on the stack contains local variables and some other information. When a function is executed, it uses the stack to store its variables, parameters for other functions to call, some information about the control flow and so on. For example, when a program enters a function, it has to save the address of the next instruction to execute when it is done with the function and wants to return, and this return address is saved on the stack.
+The memory of a program is seperated in different parts, including text for the code, data, bss, heap and stack. The data segment is for initialized static and global variables, the bss section is for uninitilized static and global variables. The heap is for dynamic memory accessed with new() or malloc(), and the stack contains local variables and some other information. When a function is executed, it uses the stack to store its variables, parameters for other functions to call, some information about the control flow and so on. For example, when a program enters a function, it has to save the address of the next instruction to execute when it is done with the function and wants to return, and this return address is saved on the stack.
+
+The program also uses registers. The instruction pointer (eip in 32 bit, rip in 64 bit architectures) points to the next instruction the program will execute. The RSP (stack pointer) points to the top of the stack, where variables would be pushed onto and popped from the stack. The rbp (base pointer) points to the beginning of the stack at the very bottom for this specific function. Underneath the rbp lies the old rbp of the function that was called this function, and the return address to jump back.
 
 ![Stack](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/stack.png)
 
 Some vulnerabilities in code can make it possible to manipulate that stack, e.g. to overwrite the return address, which will cause the programm to jump to a different place in the memory and possibly execute instructions there. Many times, this happens because a buffer - a designated block of memory that stores some values of the same type - is not managed correctly, allowing for values to be written that exceed the capacity of the buffer and overwrite whatever comes next on the stack, possible until the return address (see image).
 
-The program also uses registers. The instruction pointer (eip in 32 bit, rip in 64 bit architectures) points to the next instruction the program will execute. The RSP (stack pointer) points to the top of the stack, where variables would be pushed onto and popped from the stack. The rbp (base pointer) points to the beginning of the stack at the very bottom for this specific function. Underneath the rbp lies the old rbp of the function that was called this function, and the return address to jump back.
-
+On the heap, variables are stored as well, and in a similar way, overflows can be used to manipulate the program.
 
 For a comprehensive introduction into the topic of buffer overflows and executing shell code on the stack, see [smashing the stack for fun and profit](http://www-inst.eecs.berkeley.edu/~cs161/fa08/papers/stack_smashing.pdf).
 
