@@ -135,7 +135,7 @@ The programm `exploit2` just produces the correct number of bytes as an output. 
 
 This program is a little game that has an element of chance. If two random three-digit numbers are the same, the user will hit the jackpot and get a lot of money. However, the program uses a function pointer to jump to the part in the code where the game is executed. And the length of the username, which is stored in a buffer on the stack, is not checked at all. This can be used to the players advantage, making the game give out a jackpot and not even crashing in the process of doing so!
 
-![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3.png)
+![exploit3 explanation](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3explained.png)
 
 
 This is the code for the program:
@@ -181,9 +181,11 @@ int main()
 }
 ```
 
-The attacker only needs to chose the username in such a way that the buffer spills over to the functionptr, which is saved on the stack directly next to the name buffer. Instead of having the functionptr point to play(), it should instead be made to point to jackpot() directly. The address of jackpot() might start with null bytes, but the attacker only has to overwrite the bytes that need to be changed. The input string `\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xca\x47\x55\x55\x55\x55` sets 8 bytes that can be anything (stored as the user's name), followed by the address of jackpot(). 
+The attacker only needs to chose the username in such a way that the buffer spills over to the functionptr, which is saved on the stack directly next to the name buffer. Instead of having the functionptr point to play(), it should instead be made to point to jackpot() directly. The address of jackpot() might start with null bytes, but the attacker only has to overwrite the bytes that need to be changed. The input string `\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xca\x47\x55\x55\x55\x55` sets 8 bytes that can be anything (stored as the user's name), followed by the address of jackpot(). (The address will probably have to be changed for the exploit to work on another system. Just run the program in gdb and use `disass jackpot` to see the address that is needed.)
 
-![exploit5 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit5explained.png)
+
+![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3.png)
+
 
 
 
