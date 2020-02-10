@@ -225,7 +225,9 @@ int main(int argc, char *argv[])
   return 0;
 }
 ```
-An attacker can overwrite the RIP stored on the stackframe of insecure() to jump somewhere else and to execute shellcode. However, there is not much space on the stack of the programm to put all the shellcode. There is another option: The attacker can put the shellcode in an environment variable, which will also be accessible on the stack during runtime. This is achieved with the command `export SHELLCODE=$(cat shellcode.bin)`. 
+An attacker can overwrite the RIP stored on the stackframe of insecure() to jump somewhere else and to execute shellcode. However, there is not much space on the stack of the programm to put all the shellcode. There is another option: The attacker can put the shellcode in an environment variable, which will also be accessible on the stack during runtime. This is achieved with the command `export SHELLCODE=$(cat shellcode.bin)`. If the program is now run with gdb and the stack is examined way down at the very bottom, the environment variable is actually there.
+
+![Environment variables on the stack](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit4environment.png)
 
 Now all there is to do is to fill the buffer for the argument to `hackme4` with 8 bytes of meaningless content, followed by the 8 byte address of the environment variable on the stack. In `exploit4`, there is actually a somewhat flexible function that will calculate this position at runtime, taking the name of the environment variable as an argument. Look at [the sourcecode](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/code/exploit4.c) for more details. Now, if the hacker starts the program with `./hackme4 $(./exploit4 SHELLCODE)`, the shellcode calling printf is executed.
 
