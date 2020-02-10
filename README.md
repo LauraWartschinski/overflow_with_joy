@@ -1,6 +1,6 @@
 # overflow_with_joy
 
-This is a collection of programs written in c that are vulnerable for buffer overflows and exploits.
+This is a collection of programs written in c that are vulnerable for overflows and exploits.
 
 - [overflow_with_joy](#overflow-with-joy)
   * [Background](#background) and general explanations
@@ -10,6 +10,7 @@ This is a collection of programs written in c that are vulnerable for buffer ove
   * [Hackme 1](#hackme-1) executes whatever shellcode is inserted. Use it to start a new shell.
   * [Hackme 2](#hackme-2) checks a password, but a buffer overflow makes it possible to overwrite the variable.
   * [Hackme 3](#hackme-3) can be manipulated to execute code on the stack, e.g. to start a new shell.
+  * [Hackme 4](#hackme-4) shows a very simple heap overflow that can be exploited to display the contents of a secret file.
 
 
 
@@ -181,3 +182,86 @@ int main()
   return 0;
 }
 ```
+
+
+## Hackme 4 ##
+
+This time, the heap is used to create an overflow. There are two files on the file system, `public.txt` and `secret.txt`. The following program takes the username as an argument, greets the user, and without any intended connection to the username, displays the content of `public.txt`. However, since all the data is stored on the heap, an overflow for the username can overwrite the address of the file to read, causing the programm to display the contents of `secret.txt`.
+
+
+![exploit4 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit4.png)
+
+This is the sourcecode:
+
+```
+#include <stdio.h> 
+#include <stdlib.h>
+#include <string.h> 
+
+//a struct to hold information about a file  
+struct file  
+{ 
+    int id; 
+    char filename[8]; 
+};
+
+//a struct to hold information about a user
+struct user
+{
+  int id;
+  char name[8];
+};
+
+  
+int main (int argc, char **argv) 
+{ 
+  if (argc < 2) {
+		puts("Please enter your name as a command line parameter.");
+    
+  } 
+  else {
+
+    //creating a user and a file
+    struct user *userptr;
+    userptr = malloc(sizeof(struct user));
+
+    struct file *fileptr;
+    fileptr = malloc(sizeof(struct file));
+    fileptr->id = 1;
+    strcpy(fileptr->filename, "public.txt");
+    
+    
+    //setting the user information - on the heap, this might overwrite the information of the file
+    userptr->id = 1;
+    strcpy(userptr->name, argv[1]);
+    
+    printf("Welcome, user %s!\n\n", userptr->name);
+    
+
+    //opening some file, supposedly the file public.txt
+    
+    printf("On an unrelated note, opening %s.\n", fileptr->filename);
+    FILE *readfile;
+    readfile = fopen (fileptr->filename, "r"); 
+    if (readfile == NULL)     { 
+        fprintf(stderr, "Error opening file\n\n"); 
+        exit (1); 
+    } 
+
+
+    //printing the file contents
+    printf("File was successfully opened. It contains: \n");
+    int c;
+    while ((c = getc(readfile)) != EOF)
+        putchar(c);
+    putchar('\n');
+
+  }
+  return 0; 
+} 
+```
+
+The space for information about the user is allocated first on the heap, and after that, space for the file is allocated. However, the information about the user is written on the heap later, which makes it possible to simply overwrite what was stored for the file on the heap. 
+
+
+![exploit4 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit4explained.png)
