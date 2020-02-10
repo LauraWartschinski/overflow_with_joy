@@ -170,14 +170,14 @@ void play()
 
 int main()
 {
-	void (*functionptr)();
+  void (*functionptr)();
   functionptr = &play;
   char name[8];   // first name of the player
   printf("Welcome to this game of luck! What is your fist name:\n");
   scanf("%s",name);
   functionptr();
   printf("Game finished.\n");
-	return 0;  
+  return 0;  
 }
 ```
 
@@ -190,6 +190,43 @@ The attacker only needs to chose the username in such a way that the buffer spil
 
 
 ## Hackme 4 ##
+This time, the goal is to make the following function execute a syscall. How about a printf that prints "hacked" on the screen? To achieve this, syscall has to be executed, with the register RSI containing the address of the string that should be printed, RDX containing the length of the string, and RAX and RDX containing the value 1. Possible shellcode for this without using any null bytes could look like this:
+
+```
+eb 02                   jmp    0x4
+eb 0d                   jmp    0x11
+e8 f9 ff ff ff          call   0x2
+68 61 63 6b 65 64 21 0a string "hacked!"
+5e                      pop    rsi
+48 31 c0                xor    rax,rax
+48 ff c0                inc    rax
+48 89 c7                mov    rdi,rax
+48 89 c2                mov    rdx,rax
+48 c1 e2 03             shl    rdx,0x3
+0f 05                   syscall 
+```
+
+The first three instructions save the address of the string on the stack. Then, this address is taken from the stack and put in register rsi. Next, the register RAX is cleared out to contain zero by using XOR with itself. RAX is then set to 1 by using incremet. Then, RDI and RDX are also set to 1 by copying the value from rax. With a shift left of 3 the value in RDX is changed to 8. Finally, the syscall is executed. This code will call printf and print "hacked!" to the screen.
+
+But how would a hacker put this shellcode into the target program? The whole programm is quite small, however, and there is only a buffer of 8 bytes.
+
+```
+#include <string.h>
+
+void insecure(char* input){
+  char buf[8];
+  strcpy(buf,input);
+  return;
+}
+
+int main(int argc, char *argv[])
+{
+  insecure(argv[1]);
+  return 0;
+}
+```
+An attacker can overwrite the RIP stored on the stackframe of insecure() to jump somewhere else and to execute shellcode. However, there is not much space on the stack of the programm to put shellcode. 
+
 
 
 ## Hackme 5 ##
