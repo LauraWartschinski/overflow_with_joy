@@ -261,7 +261,7 @@ int main (int argc, char **argv)
 } 
 ```
 
-The space for information about the user is allocated first on the heap, and after that, space for the file is allocated. However, the information about the user is written on the heap later, which makes it possible to simply overwrite what was stored for the file on the heap. 
+The space for information about the user is allocated first on the heap, and after that, space for the file is allocated. However, the information about the user is written on the heap later, which makes it possible to simply overwrite what was stored for the file on the heap with new information, e.g. the string "secret.txt" at exactly the place where `fileptr->filename` points to, causing the program to load secret.txt.
 
 
 ![exploit4 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit4explained.png)
