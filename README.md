@@ -6,8 +6,8 @@ This is a collection of small demo programs written in c that are vulnerable for
 - [Setup](#setup)
   * [compiling everything](#compiling-everything)
   * [creating shellcode bytes](#creating-shellcode-bytes)
-- [Hackme 1](#hackme-1) executes whatever shellcode is inserted. Use it to start a new shell.
-- [Hackme 2](#hackme-2) checks a password, but a buffer overflow makes it possible to overwrite the variable.
+- [Hackme 1](#hackme-1) executes whatever shellcode is inserted. The attacker can use it to start a shell.
+- [Hackme 2](#hackme-2) checks a password, but a buffer overflow makes it possible to bypass the authentication.
 - [Hackme 3](#hackme-3) has a function pointer that can be overwritten with a buffer overflow, causing the user to hit the jackpot.
 - [Hackme 4](#hackme-4) can be tricked to execute shellcode from the environment variables to print "hacked!"
 - [Hackme 5](#hackme-5) can be manipulated with a buffer overflow to execute code on the stack, in this case to start a new shell.
@@ -17,15 +17,15 @@ This is a collection of small demo programs written in c that are vulnerable for
 
 ## Background ##
 
-The memory of a program is seperated in different parts, including text for the code, data, bss, heap and stack. The data segment is for initialized static and global variables, the bss section is for uninitilized static and global variables. The heap is for dynamic memory accessed with new() or malloc(), and the stack contains local variables and some other information. When a function is executed, it uses the stack to store its variables, parameters for other functions to call, some information about the control flow and so on. For example, when a program enters a function, it has to save the address of the next instruction to execute when it is done with the function and wants to return, and this return address is saved on the stack.
+The memory of a program is seperated in different parts, including text for the code, data, bss, heap and stack. The data segment is used for initialized static and global variables, int the bss section, uninitilized static and global variables are stored. The heap is used for dynamic memory accessed with new() or malloc(), and the stack contains local variables and some other information. When a function is executed, it uses the stack to store its variables, parameters for other functions to call, and some information about the control flow. For example, when a function is called, the program has to save the address of the next instruction after the function call, so it can return later and resume the execution of instructions. This address is saved on the stack and later retrieved from there.
 
-The program also uses registers. The instruction pointer (eip in 32 bit, rip in 64 bit architectures) points to the next instruction the program will execute. The RSP (stack pointer) points to the top of the stack, where variables would be pushed onto and popped from the stack. The rbp (base pointer) points to the beginning of the stack at the very bottom for this specific function. Underneath the rbp lies the old rbp of the function that was called this function, and the return address to jump back.
+Information is also saved in registers. The instruction pointer (called RIP in 64 bit architectures) points to the next instruction the program will execute. The RSP (stack pointer) points to the top of the stack, where variables would be pushed onto or popped from the stack. The RPB (base pointer) points to the beginning of the stack at the very bottom for this specific function. At the location where the RPB points to lies the value of the old RPB of the function that originally called this function, and the return address that is used to jump back.
 
 ![Stack](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/stack.png)
 
-Some vulnerabilities in code can make it possible to manipulate that stack, e.g. to overwrite the return address, which will cause the programm to jump to a different place in the memory and possibly execute instructions there. Many times, this happens because a buffer - a designated block of memory that stores some values of the same type - is not managed correctly, allowing for values to be written that exceed the capacity of the buffer and overwrite whatever comes next on the stack, possible until the return address (see image).
+Some vulnerabilities in code can make it possible to manipulate that stack, e.g. to overwrite the return address, which will cause the programm to jump to a different place in the memory and possibly execute instructions there. One way this can happen is through a *buffer overflow*. A buffer is a designated block of memory that stores some values of the same type, e.g. an array of integers or a string (a list of chars). The buffer has a certain amount of memory space, but if it is not managed correctly, it might happen that more bytes are written to the buffer than intended, causing the data to overwrite whatever comex next on the stack, maybe even the return address (see image). On the heap, variables are stored as well, and in a similar way, overflows can be used to overwrite values and manipulate the program.
 
-On the heap, variables are stored as well, and in a similar way, overflows can be used to manipulate the program.
+Sometimes, it is possible for an attacker to insert instructions that were not originally part of the program, causing it to do whatever the attacker wants. That is generally done by injection shellcode, binary representations of assembler instructions. When passing shellcode via stdin or as an argument to a program, it is usually cut off at the first null byte. Therefore, the assembler code has to be created in a way that avoids null bytes in the hex representation.
 
 For a comprehensive introduction into the topic of buffer overflows and executing shell code on the stack, see [smashing the stack for fun and profit](http://www-inst.eecs.berkeley.edu/~cs161/fa08/papers/stack_smashing.pdf).
 
@@ -36,14 +36,15 @@ For a comprehensive introduction into the topic of buffer overflows and executin
 To compile the files with the flags, execute
 ```./compile-all.sh```
 All code is compiled with some flags that make it easier to execute exploits:  `-fno-stack-protector` to not include stack canaries etc., `-z execstack` to make the stack executable, and `-O0` to remove optimizations. All exploits are made to execute on a 64 bit architecture and are tested in Ubuntu 18.04. The full command is for example 
-`gcc hackme1.c -o hackme1 -O0 -fno-stack-protector -z execstack -g`. This script also disables ASLR (stack randomization), which helps because the memory addresses will stay the same between two executions of the program. 
+`gcc hackme1.c -o hackme1 -O0 -fno-stack-protector -z execstack -g`. This script also disables ASLR (stack randomization), which helps because the memory addresses will stay the same between two executions of the program.
+
+The exploits are generally executed with `./hackmeX $(./exploitX)` if the exploit is passed as a parameter, or with `./exploitX | ./hackmeX` if it is used as stdin. 
 
 ### creating shellcode bytes ###
 
 ![makeshellcode script](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/makeshellcode.png)
 
 There is also a script `makeshellcode.sh`, which will automatically generate the bytes of assembly code for the instructions specified in `shellcode-creator.c`. It does so by starting the gdb and using its disass function to look at the bytes, to speed up the process of manual inspection. However, it will stop at the first `ret` instruction it encounters. As long as you don't use this, it's fine. Otherwise you might just need to figure out the instructions yourself. 
-
 
 ## Hackme 1 ##
 
@@ -72,16 +73,20 @@ In `exploit1.c`, shellcode is inserted that will cause the program to set the re
 "start: pop %rdi;" //take the address of the string /bin/sh from the stack
 "xor %rax, %rax;" //set RAX to zero
 "movb %al, 7(%rdi);" //set a nullbyte after the /bin/sh in the written file
-"mov $0x3b, %al;" //put the syscall number in rax, in this case execve
+"mov $0x3b, %al;" //put the syscall number in RAX, in this case 0x3b for execve
 "xor %rsi,%rsi;" //RSI must be set to zero
 "xor %rdx,%rdx;" //RDX must be set to zero    
-"syscall;" //start the 
+"syscall;" //start the syscall
 ```
+
+Since this programm is not actually exploited, but just executes the shellcode itself, just type `./exploit1` to try it out with the shellcode payload.
 
 
 ## Hackme 2 ##
 
-In the next example, we are looking at a C program that was not made to be exploited, but contains a buffer overflow vulnerability. The program takes an input as argument and checks if that input is correct, displaying either "password correct" or "wrong password". Of course, it might execute some other functionality, but this is just a minimal example. The goal here is to get the program to execute the code for the correct password, without actually entering the correct password. If it crashes later, that's okay, since the goal was reached anyway. 
+The first example was created specifically to execute shellcode. From now on, the examples will be programs that have other purposes, but contain vulnerabilities that can be exploited.
+
+Hackme2 contains a buffer overflow vulnerability that can be used to manipulate a variable. The program takes an input as argument and checks if that input is correct, displaying either "password correct" or "wrong password". Of course, it might execute some other functionality, but this is just a minimal example. The goal here is to get the program to execute the code for the correct password, without actually entering the correct password (assuming the hacker doesn't know it). If the program crashes afterwards, that's okay, since the goal was reached already. 
 
 The programm can simply be executed with `./hackme2 mypassword`. This is the sourcecode: 
 
@@ -104,7 +109,6 @@ int check_password(char *password){
   
   
 }
-
 
 int main (int argc, char *argv[]) {
   if (argc < 2) {
@@ -132,7 +136,7 @@ The programm `exploit2` just produces the correct number of bytes as an output. 
 
 ## Hackme 3 ##
 
-This program is a little game that has an element of chance. If two random three-digit numbers are the same, the user will hit the jackpot and get a lot of money. However, the program uses a function pointer to jump to the part in the code where the game is executed. And the length of the username, which is stored in a buffer on the stack, is not checked at all. This can be used to the players advantage, making the game give out a jackpot and not even crashing in the process of doing so!
+This program is a little game that has an element of chance. If two random three-digit numbers are the same, the user will hit the jackpot and get a lot of money. However, the program uses a function pointer to jump to the part in the code where the game is executed. And the length of the username, which is stored in a buffer on the stack, is not checked at all. The function pointer can overwritten just as any other variable. This can be used to the players advantage, making the game give out a jackpot and not even crashing in the process of doing so!
 
 ![exploit3 explanation](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3explained.png)
 
@@ -180,16 +184,14 @@ int main()
 }
 ```
 
-The attacker only needs to chose the username in such a way that the buffer spills over to the functionptr, which is saved on the stack directly next to the name buffer. Instead of having the functionptr point to play(), it should instead be made to point to jackpot() directly. The address of jackpot() might start with null bytes, but the attacker only has to overwrite the bytes that need to be changed. The input string `\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xca\x47\x55\x55\x55\x55` sets 8 bytes that can be anything (stored as the user's name), followed by the address of jackpot(). (The address will probably have to be changed for the exploit to work on another system. Just run the program in gdb and use `disass jackpot` to see the address that is needed.)
+The attacker only needs to chose the username in such a way that the buffer spills over to the functionptr, which is saved on the stack directly next to the name buffer. Instead of having the functionptr point to play(), it should instead be made to point to jackpot() directly. The address of jackpot() might start with null bytes, but the attacker only has to overwrite the bytes that need to be changed. The input string `\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xca\x47\x55\x55\x55\x55` sets 8 bytes that can be anything (stored as the user's name), followed by the address of jackpot(). Executing `./hackme3 $(./exploit3)` achieves the same effect. (The address will probably have to be changed for the exploit to work on another system. Just run the program in gdb and use `disass jackpot` to see the address that is needed.)
 
 
 ![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit3.png)
 
 
-
-
 ## Hackme 4 ##
-This time, the goal is to make the following function execute a syscall. How about a printf that prints "hacked" on the screen? To achieve this, syscall has to be executed, with the register RSI containing the address of the string that should be printed, RDX containing the length of the string, and RAX and RDX containing the value 1. Possible shellcode for this without using any null bytes could look like this:
+This time, the goal is to make the program execute a syscall that was originally not present in the code. For example, an attacker could cause a printf that prints "hacked" on the screen. To achieve this, the assembler command 'syscall' has to be executed, with the register RSI containing the address of the string that should be printed, RDX containing the length of the string, and RAX and RDX containing the value 1. Possible shellcode for this without using any null bytes could look like this:
 
 ```
 eb 02                   jmp    0x4
@@ -235,7 +237,9 @@ Now all there is to do is to fill the buffer for the argument to `hackme4` with 
 
 ## Hackme 5 ##
 
-For this example, the goal is to execute some arbitrary commands that were not programmed into `hackme5.c`. This is the original sourcecode:
+For this example, the goal is to execute some arbitrary commands that were not programmed into `hackme5.c`. This time, a generous buffer is present, and the shellcode can be placed direclty in the buffer that causes the overflow.
+
+This is the original sourcecode:
 
 ``` 
 #include<stdio.h>
@@ -256,19 +260,15 @@ int main(int argc, char *argv[])
 
 This program accepts a a parameter and then writes it out again. However, the length of the parameter is not checked, and if it exceeds the 256 byte buffer, an oveflow will occur. This makes it possible to overwrite the return address, causing the programm to jump elsewhere.
 
-More specifically, the programmed can be made to jump up on the stack into the area of the buffer. If the buffer was filled with data that can also be interpreted as instructions, they can then be executed. By putting in the instructions to execute a syscall that starts a shell, the programm will do exactly that. The code in `exploit3.c` produces a string of bytes that serves this function. Execute both with `./hackme3 $(./exploit3)`. 
+More specifically, the programmed can be made to jump up on the stack into the area of the buffer itself. If the buffer was filled with data that can also be interpreted as instructions, they can then be executed. By putting in the instructions to execute a syscall that starts a shell, the programm will do exactly that. Shellcode for starting a new shell was already created for `hackme1`, so it can be used again here. `exploit5.c` produces a string of bytes that represent this shellcode, which can be filled in the vulnerable program with `./hackme5 $(./exploit5)`. 
 
 ![exploit3](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit5.png)
 
-When the return address is overwritten with an address within the stack, the execution of the programm follows that and jumps into a list of NOP instructions. This 'nop sled' accounts for small variations in the size and position of the stack. The next intructions are there to prepare the syscall execve. In register rax, the number of the syscall must be placed. Registers rdx and rsi have to be zero for this example. And rdi needs to point to a location where a string can be found that contains the name of the programm to execute, in this case `/bin/sh`. 
+When the return address is overwritten with an address within the stack, the execution of the programm follows that and jumps into a list of NOP instructions. This 'nop sled' accounts for small variations in the size and position of the stack. The next intructions are there to prepare the syscall execve. In register RAX, the number of the syscall must be placed. Registers RDX and RSI have to be zero for this example. RDI needs to point to a location where a string can be found that contains the name of the programm to execute, in this case `/bin/sh`. 
 
-Since it is not known exactly at which position this string will end up, the address can be put on the stack by using `call`, which was not intended for this hacky purpose, but serves it well. By placing the address of the next 'instruction' (in this case the address of the string) on top of the stack, we can later pop it back into th register where we need it. Of course, there are many other solutions.
+Since it is not known exactly at which position this string will end up, the address can be put on the stack by using `call`, which was not intended for this hacky purpose, but serves it well. Call will push the address directly after itself on the stack, adjust the stack pointer, and then jump to whatever should be called. By placing the address of the next 'instruction' (in this case the address of the string) on top of the stack, an attacker can get the address of the string at runtime by simply popping it from the stack again. Of course, there are many other solutions to achieve the same outcome. The shellcode presented here contains no null bytes because it has to be passed as a parameter to the programm. 
 
-The shellcode presented here contains no null bytes because it has to be passed as a parameter to the programm. This is why some obvious instructions are replaced by less trivial ones which accomplish the same goal but don't contain null bytes.
-
-![exploit5 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit5screen.png)
-
-This is the final shellcode, put into the programm `exploit.c`, which also creates the NOP slide before the actual payload starts. The \xaa bytes are for the purpose of aligning the stack correctly. Execute the exploits with `./hackme5 $(./exploit5)`. 
+The final shellcode for executing the exploit is generated by  `exploit.c`. The shellcode starts with a NOP slide (\x90 bytes). The \xaa bytes near the end are for the purpose of aligning the stack correctly.
 
 ```
 #include <stdio.h>
@@ -287,6 +287,11 @@ int main()
   return 0;
 }
 ```
+
+When execute the exploits with `./hackme5 $(./exploit5)`, a new shell is spawned.
+
+![exploit5 demo](https://github.com/LauraWartschinski/overflow_with_joy/blob/master/img/exploit5screen.png)
+
 
 
 ## Hackme 6 ##
